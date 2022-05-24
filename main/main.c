@@ -7,6 +7,8 @@
 #include "server.h"
 #include "data.h"
 
+static const char *TAG = "Hot Water Jack";
+
 void app_main(void)
 {
   // Initialize NVS
@@ -20,7 +22,9 @@ void app_main(void)
 
   wifi_init_sta();
 
-  BoilerData boiler_data;
+  BoilerData* boiler_data = malloc(sizeof(BoilerData));
+  ESP_LOGI(TAG, "Memory allocated for data: %d", sizeof(BoilerData));
+  ESP_LOGI(TAG, "Free memory: %d", xPortGetFreeHeapSize());
 
-  start_data_server(&boiler_data);
+  start_data_server(boiler_data);
 }

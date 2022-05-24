@@ -20,7 +20,7 @@ typedef struct
 
 void _print_reading(const Reading *, bool csv, char *out);
 
-#define max_reading_index 1440
+#define max_reading_index 1440 // 60min/hr * 24hr (1 sample/min)
 typedef struct
 {
     struct tm date;
@@ -28,7 +28,7 @@ typedef struct
     uint16_t index;
 } DayData;
 
-#define max_day_index 7
+#define max_day_index 7 // Keep one week's worth of data in RAM in rolling fashion
 typedef struct
 {
     DayData day[max_day_index];

@@ -16,13 +16,12 @@
 
 #include "server.h"
 
-#define CONFIG_EXAMPLE_IPV6
-#define PORT                        CONFIG_SERVER_PORT
-#define KEEPALIVE_IDLE              CONFIG_SERVER_KEEPALIVE_IDLE
-#define KEEPALIVE_INTERVAL          CONFIG_SERVER_KEEPALIVE_INTERVAL
-#define KEEPALIVE_COUNT             CONFIG_SERVER_KEEPALIVE_COUNT
+#define PORT                        3333
+#define KEEPALIVE_IDLE              5 // Keep-alive idle time. In idle time without receiving any data from peer, will send keep-alive probe packet
+#define KEEPALIVE_INTERVAL          5 // Keep-alive probe packet interval time.
+#define KEEPALIVE_COUNT             3 // Keep-alive probe packet retry count.
 
-static const char *TAG = "data_server";
+static const char *TAG = "Server";
 
 static void do_retransmit(const int sock)
 {
@@ -56,7 +55,6 @@ static void do_retransmit(const int sock)
 static void tcp_server_task(void *pvParameters)
 {
     char addr_str[128];
-//    int addr_family = (int)pvParameters;
     BoilerData* boiler_data = (BoilerData*)pvParameters;
     int ip_protocol = 0;
     int keepAlive = 1;
@@ -65,22 +63,11 @@ static void tcp_server_task(void *pvParameters)
     int keepCount = KEEPALIVE_COUNT;
     struct sockaddr_storage dest_addr;
 
-//     if (addr_family == AF_INET) {
-//         struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
-//         dest_addr_ip4->sin_addr.s_addr = htonl(INADDR_ANY);
-//         dest_addr_ip4->sin_family = AF_INET;
-//         dest_addr_ip4->sin_port = htons(PORT);
-//         ip_protocol = IPPROTO_IP;
-//     }
-// #ifdef CONFIG_EXAMPLE_IPV6
-//     else if (addr_family == AF_INET6) {
         struct sockaddr_in6 *dest_addr_ip6 = (struct sockaddr_in6 *)&dest_addr;
         bzero(&dest_addr_ip6->sin6_addr.un, sizeof(dest_addr_ip6->sin6_addr.un));
         dest_addr_ip6->sin6_family = AF_INET6;
         dest_addr_ip6->sin6_port = htons(PORT);
         ip_protocol = IPPROTO_IPV6;
-//     }
-// #endif
 
     int listen_sock = socket(AF_INET6, SOCK_STREAM, ip_protocol);
     if (listen_sock < 0) {
@@ -90,12 +77,6 @@ static void tcp_server_task(void *pvParameters)
     }
     int opt = 1;
     setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-#if defined(CONFIG_EXAMPLE_IPV4) && defined(CONFIG_EXAMPLE_IPV6)
-    // Note that by default IPV6 binds to both protocols, it is must be disabled
-    // if both protocols used at the same time (used in CI)
-    setsockopt(listen_sock, IPPROTO_IPV6, IPV6_V6ONLY, &opt, sizeof(opt));
-#endif
-
     ESP_LOGI(TAG, "Socket created");
 
     int err = bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
@@ -132,11 +113,9 @@ static void tcp_server_task(void *pvParameters)
         if (source_addr.ss_family == PF_INET) {
             inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
         }
-#ifdef CONFIG_EXAMPLE_IPV6
         else if (source_addr.ss_family == PF_INET6) {
             inet6_ntoa_r(((struct sockaddr_in6 *)&source_addr)->sin6_addr, addr_str, sizeof(addr_str) - 1);
         }
-#endif
         ESP_LOGI(TAG, "Socket accepted ip address: %s", addr_str);
 
         do_retransmit(sock);
