@@ -23,7 +23,9 @@ Special function to print out latest data point in human readable format.
 | now      | Most recent data row, human readable |
 | 1, 2..   | Most recent N data rows, binary |
 
-Pro: Very simple storage and retrieval design
+Pros: 
+1. Very simple storage and retrieval design
+
 Cons: 
 1. Makes it hard to stitch together multiple datasets because there are no timestamps
 2. All data is in RAM, so a power outage will delete all data
