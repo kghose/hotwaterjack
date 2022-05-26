@@ -2,7 +2,6 @@
 #define DATA_H
 
 #include <stdint.h>
-#include <stdbool.h>
 #include "time.h"
 
 #define vars 4
@@ -19,11 +18,15 @@ typedef struct
 uint8_t *next_writable_row(BoilerData *);
 // Return row vector to write to. Internally, increments array index with loop around.
 
-uint16_t latest_row(const BoilerData *);
-// last_index - 1 with loop around
+typedef struct
+{
+    uint16_t start[2];
+    uint16_t end[2];
+    uint8_t has_two_chunks;
+} DataChunks;
 
-uint8_t const *read_row_and_decrement(const BoilerData *, uint16_t *);
-// Return this row vector and return the previous index, with loop around.
+DataChunks get_data_chunks(const BoilerData *, uint16_t );
+// Return data chunks for most recent N samples
 
 size_t human_readable(const uint8_t row[vars], char *out);
 // Return row in human readable format

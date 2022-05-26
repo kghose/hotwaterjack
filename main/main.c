@@ -6,6 +6,7 @@
 #include "wifi.h"
 #include "server.h"
 #include "data.h"
+#include "sampler.h"
 
 static const char *TAG = "Hot Water Jack";
 
@@ -20,11 +21,14 @@ void app_main(void)
   }
   ESP_ERROR_CHECK(ret);
 
+  ESP_ERROR_CHECK(esp_event_loop_create_default());
+
   wifi_init_sta();
 
-  BoilerData* boiler_data = malloc(sizeof(BoilerData));
+  BoilerData *boiler_data = malloc(sizeof(BoilerData));
   ESP_LOGI(TAG, "Memory allocated for data: %d", sizeof(BoilerData));
   ESP_LOGI(TAG, "Free memory: %d", xPortGetFreeHeapSize());
 
   start_data_server(boiler_data);
+  start_sampler(boiler_data);
 }

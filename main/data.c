@@ -18,31 +18,24 @@ uint8_t *next_writable_row(BoilerData *boiler_data)
     return boiler_data->data[idx];
 }
 
-uint16_t latest_row(const BoilerData *boiler_data)
-// last_index - 1 with loop around
+
+DataChunks get_data_chunks(const BoilerData *boiler_data, uint16_t samples)
+// Return data chunks for most recent N samples
 {
-    if (boiler_data->last_index == 0)
+    if (samples <= boiler_data->last_index)
     {
-        return max_reading_index - 1;
+        return (DataChunks){
+            .start = {boiler_data->last_index - samples, 0},
+            .end = {boiler_data->last_index, 0},
+            .has_two_chunks = 0};
     }
     else
     {
-        return boiler_data->last_index - 1;
+        return (DataChunks){
+            .start = {max_reading_index - (samples - boiler_data->last_index), 0},
+            .end = {max_reading_index, boiler_data->last_index},
+            .has_two_chunks = 1};
     }
-}
-uint8_t const *read_row_and_decrement(const BoilerData *boiler_data, uint16_t *index)
-// Return this row vector and return the previous index, with loop around.
-{
-    uint16_t idx = *index;
-    if (*index == 0)
-    {
-        *index = max_reading_index - 1;
-    }
-    else
-    {
-        (*index)--;
-    }
-    return boiler_data->data[idx];
 }
 
 size_t human_readable(const uint8_t row[vars], char *out)

@@ -23,14 +23,14 @@
 
 static const char *TAG = "Server";
 
-static void tx_response(const int sock, char *tx_buffer, size_t len)
+static void tx_response(const int sock, char *tx_buffer, size_t start, size_t end)
 {
     // send() can return less bytes than supplied length.
     // Walk-around for robust implementation.
-    int to_write = len;
+    int to_write = end - start;
     while (to_write > 0)
     {
-        int written = send(sock, tx_buffer + (len - to_write), to_write, 0);
+        int written = send(sock, tx_buffer + (end - to_write), to_write, 0);
         if (written < 0)
         {
             ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
@@ -39,12 +39,35 @@ static void tx_response(const int sock, char *tx_buffer, size_t len)
     }
 }
 
+static void latest_sample_human_readable(BoilerData const *boiler_data, const int sock)
+{
+    char tx_buffer[128];
+    DataChunks data_chunks = get_data_chunks(boiler_data, 1);
+    int tx_len = human_readable(boiler_data->data[data_chunks.start[0]], tx_buffer);
+    tx_response(sock, tx_buffer, 0, tx_len);
+}
+
+static void N_recent_samples_binary(BoilerData const *boiler_data, uint16_t samples, const int sock)
+{
+    DataChunks data_chunks = get_data_chunks(boiler_data, samples);
+    tx_response(sock, (char*)boiler_data->data, data_chunks.start[0], data_chunks.end[0]);
+    if (data_chunks.has_two_chunks)
+    {
+        tx_response(sock, (char*)boiler_data->data, data_chunks.start[1], data_chunks.end[1]);
+    }
+}
+
+static void help(const int sock)
+{
+    char tx_buffer[40];
+    int tx_len = sprintf(tx_buffer, "Valid commands: n, 1, 2, 3 ...");
+    tx_response(sock, tx_buffer, 0, tx_len);
+}
+
 static void serve_data(const int sock, BoilerData const *boiler_data)
 {
     int len;
-    int tx_len;
     char rx_buffer[128];
-    char tx_buffer[128];
 
     do
     {
@@ -62,30 +85,20 @@ static void serve_data(const int sock, BoilerData const *boiler_data)
             rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
             ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
 
-            uint16_t row = latest_row(boiler_data);
-            uint8_t *data = read_row_and_decrement(boiler_data, &row);
-
             if (rx_buffer[0] == 'n') // "now": Human readable latest reading
             {
-                tx_len = human_readable(data, tx_buffer);
-                tx_response(sock, tx_buffer, tx_len);
+                latest_sample_human_readable(boiler_data, sock);
             }
             else
             {
                 int samples = atoi(rx_buffer);
                 if (samples == 0)
                 {
-                    tx_len = sprintf(tx_buffer, "Valid commands: n, 1, 2, 3 ...");
-                    tx_response(sock, tx_buffer, tx_len);
+                    help(sock);
                 }
                 else
                 {
-                    while (samples--)
-                    {
-                        tx_response(sock, (char *)data, vars);
-                        // We can do this because of the simplicity of our data structure
-                        data = read_row_and_decrement(boiler_data, &row);
-                    }
+                    N_recent_samples_binary(boiler_data, samples, sock);
                 }
             }
         }
