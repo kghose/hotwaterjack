@@ -28,6 +28,9 @@ typedef struct
 DataChunks get_data_chunks(const BoilerData *, uint16_t );
 // Return data chunks for most recent N samples
 
+uint8_t* latest_sample(const BoilerData *);
+// Just the latest sample
+
 size_t human_readable(const uint8_t row[vars], char *out);
 // Return row in human readable format
 

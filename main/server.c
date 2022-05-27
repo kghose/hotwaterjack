@@ -42,8 +42,7 @@ static void tx_response(const int sock, char *tx_buffer, size_t start, size_t en
 static void latest_sample_human_readable(BoilerData const *boiler_data, const int sock)
 {
     char tx_buffer[128];
-    DataChunks data_chunks = get_data_chunks(boiler_data, 1);
-    int tx_len = human_readable(boiler_data->data[data_chunks.start[0]], tx_buffer);
+    int tx_len = human_readable(latest_sample(boiler_data), tx_buffer);
     tx_response(sock, tx_buffer, 0, tx_len);
 }
 
@@ -60,7 +59,7 @@ static void N_recent_samples_binary(BoilerData const *boiler_data, uint16_t samp
 static void help(const int sock)
 {
     char tx_buffer[40];
-    int tx_len = sprintf(tx_buffer, "Valid commands: n, 1, 2, 3 ...");
+    int tx_len = sprintf(tx_buffer, "Valid commands: n, 1, 2, 3 ...\n");
     tx_response(sock, tx_buffer, 0, tx_len);
 }
 

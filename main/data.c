@@ -11,13 +11,12 @@ uint8_t *next_writable_row(BoilerData *boiler_data)
 {
     uint16_t idx = boiler_data->last_index;
     boiler_data->last_index++;
-    if (boiler_data->last_index++ == max_reading_index)
+    if (boiler_data->last_index == max_reading_index)
     {
         boiler_data->last_index = 0;
     }
     return boiler_data->data[idx];
 }
-
 
 DataChunks get_data_chunks(const BoilerData *boiler_data, uint16_t samples)
 // Return data chunks for most recent N samples
@@ -25,16 +24,26 @@ DataChunks get_data_chunks(const BoilerData *boiler_data, uint16_t samples)
     if (samples <= boiler_data->last_index)
     {
         return (DataChunks){
-            .start = {boiler_data->last_index - samples, 0},
-            .end = {boiler_data->last_index, 0},
+            .start = {(boiler_data->last_index - samples) * vars, 0},
+            .end = {boiler_data->last_index * vars, 0},
             .has_two_chunks = 0};
     }
     else
     {
         return (DataChunks){
-            .start = {max_reading_index - (samples - boiler_data->last_index), 0},
-            .end = {max_reading_index, boiler_data->last_index},
+            .start = {(max_reading_index - (samples - boiler_data->last_index))*vars, 0},
+            .end = {max_reading_index * vars, boiler_data->last_index * vars},
             .has_two_chunks = 1};
+    }
+}
+
+uint8_t* latest_sample(const BoilerData *boiler_data)
+// Just the latest sample
+{
+    if(boiler_data->last_index == 0) {
+        return boiler_data->data[max_reading_index];
+    } else {
+        return boiler_data->data[boiler_data->last_index - 1];
     }
 }
 

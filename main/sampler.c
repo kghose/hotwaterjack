@@ -4,12 +4,12 @@
 #include "flashled.h"
 #include "sampler.h"
 
-#define SAMPLE_DT 1000000
+#define SAMPLE_DT 5000000
 
 
 static void sample_data_callback(void *arg)
 {
-    flash_led(500000);
+    flash_led(100000);
     BoilerData *boiler_data = (BoilerData *)arg;
     uint8_t* row = next_writable_row(boiler_data);
 
