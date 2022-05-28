@@ -62,14 +62,16 @@ void sample_data_callback(void *arg)
     // test_data_sampler(row);
 
     ds18b20_requestTemperatures();
-    float temp = ds18b20_getTempF((DeviceAddress *)tempSensors[0]);
-    row[0] = (int)temp;
-    ESP_LOGI(TAG, "T0: %d", row[0]);
+    for(uint8_t i = 0 ; i < 2; i++) {
+        float temp = ds18b20_getTempF((DeviceAddress *)tempSensors[i]);
+        row[i] = (int)temp;
+        ESP_LOGI(TAG, "T%d: %d", i, row[i]);
+    }
 }
 
 void start_sampler(BoilerData *boiler_data)
 {
-    initialize_temperature_sensors(1);
+    initialize_temperature_sensors(2);
 
     const esp_timer_create_args_t periodic_timer_args = {
         .callback = &sample_data_callback,
