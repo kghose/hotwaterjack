@@ -3,6 +3,8 @@
 
 #include "flashled.h"
 
+#define LED GPIO_NUM_2
+
 void configure_led(void)
 {
     gpio_reset_pin(LED);

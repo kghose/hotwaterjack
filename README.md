@@ -49,3 +49,6 @@ Set using `idf.py menuconfig`. See [main/Kconfig.projbuild] for the list of opti
 
 
 ## Buffer design
+
+# Other software
+1. [DS18b20 ESP32 library from FeelFreeLinux](https://github.com/feelfreelinux/ds18b20)
