@@ -25,10 +25,10 @@ typedef struct
     uint8_t has_two_chunks;
 } DataChunks;
 
-DataChunks get_data_chunks(const BoilerData *, uint16_t );
+DataChunks get_data_chunks(const BoilerData *, uint16_t);
 // Return data chunks for most recent N samples
 
-uint8_t* latest_sample(const BoilerData *);
+uint8_t *latest_sample(const BoilerData *);
 // Just the latest sample
 
 size_t human_readable(const uint8_t row[vars], char *out);

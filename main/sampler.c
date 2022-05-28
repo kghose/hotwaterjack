@@ -4,24 +4,38 @@
 #include "flashled.h"
 #include "sampler.h"
 
-#define SAMPLE_DT 5000000
+#define SAMPLE_DT 500000
 
+static const char *TAG = "Sampler";
 
-static void sample_data_callback(void *arg)
+void test_data_sampler(uint8_t *row)
+{
+    static uint8_t last_row[vars] = {0, 0, 0, 0};
+    for (int i = 0; i < vars; i++)
+    {
+        if (last_row[i] == 255)
+        {
+            last_row[i] = 0;
+        }
+        else
+        {
+            last_row[i]++;
+            break;
+        }
+    }
+    for (int i = 0; i < vars; i++)
+    {
+        row[i] = last_row[i];
+    }
+}
+
+void sample_data_callback(void *arg)
 {
     flash_led(100000);
     BoilerData *boiler_data = (BoilerData *)arg;
-    uint8_t* row = next_writable_row(boiler_data);
-
-    static uint8_t debug_idx = 0;
-    static int incr = 1;
-    if((debug_idx == 0) & (incr == -1)) incr = 1;
-    if((debug_idx == 12) & (incr == 1)) incr = -1;
-    row[0] = debug_idx;
-    row[1] = debug_idx + 10;
-    row[2] = debug_idx + 20;
-    row[3] = debug_idx + 30;
-    debug_idx += incr;
+    uint8_t *row = next_writable_row(boiler_data);
+    test_data_sampler(row);
+    // ESP_LOGI(TAG, "Data index: %d", boiler_data->last_index);
 }
 
 void start_sampler(BoilerData *boiler_data)

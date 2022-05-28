@@ -27,10 +27,9 @@ void app_main(void)
   configure_led();
   wifi_init_sta();
 
-  BoilerData *boiler_data = malloc(sizeof(BoilerData));
+  BoilerData *boiler_data = calloc(1, sizeof(BoilerData));
   ESP_LOGI(TAG, "Memory allocated for data: %d", sizeof(BoilerData));
   ESP_LOGI(TAG, "Free memory: %d", xPortGetFreeHeapSize());
-  boiler_data->last_index = 0;
 
   start_data_server(boiler_data);
   start_sampler(boiler_data);
