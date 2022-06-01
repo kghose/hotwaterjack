@@ -11,26 +11,26 @@
 const int TEMP_BUS = GPIO_NUM_15; // The pin the DS18b20 is connected to
 static const char *TAG = "Sampler";
 
-DeviceAddress tempSensors[vars];
+//DeviceAddress tempSensors[vars];
 
-void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t count)
+void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
 {
-    unsigned int numberFound = 0;
+    *count = 0;
     reset_search();
-    // search for count addresses on the oneWire protocol
-    while (search(tempSensorAddresses[numberFound], true))
+    // search for addresses on the oneWire protocol
+    while (search(tempSensorAddresses[*count], true))
     {
-        numberFound++;
-        if (numberFound == count)
+        (*count)++;
+        if (*count == vars)
             break;
     }
 }
 
-void initialize_temperature_sensors(size_t count)
+void initialize_temperature_sensors(BoilerData *boiler_data)
 {
     ds18b20_init(TEMP_BUS);
-    get_ds18b20_addrs(tempSensors, count);
-    ds18b20_setResolution(tempSensors, count, 10);
+    get_ds18b20_addrs((DeviceAddress*)boiler_data->tsensor_address, &(boiler_data->tsensor_count));
+    ds18b20_setResolution((DeviceAddress*)boiler_data->tsensor_address, boiler_data->tsensor_count, 10);
 }
 
 void test_data_sampler(uint8_t *row)
@@ -62,16 +62,15 @@ void sample_data_callback(void *arg)
     // test_data_sampler(row);
 
     ds18b20_requestTemperatures();
-    for(uint8_t i = 0 ; i < 2; i++) {
-        float temp = ds18b20_getTempF((DeviceAddress *)tempSensors[i]);
+    for(uint8_t i = 0 ; i < boiler_data->tsensor_count; i++) {
+        float temp = ds18b20_getTempF((DeviceAddress *)boiler_data->tsensor_address[i]);
         row[i] = (int)temp;
-        ESP_LOGI(TAG, "T%d: %d", i, row[i]);
     }
 }
 
 void start_sampler(BoilerData *boiler_data)
 {
-    initialize_temperature_sensors(2);
+    initialize_temperature_sensors(boiler_data);
 
     const esp_timer_create_args_t periodic_timer_args = {
         .callback = &sample_data_callback,

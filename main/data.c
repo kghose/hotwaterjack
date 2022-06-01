@@ -15,6 +15,7 @@ uint8_t *next_writable_row(BoilerData *boiler_data)
     {
         boiler_data->last_index = 0;
     }
+    boiler_data->total_samples++;
     return boiler_data->data[idx];
 }
 
@@ -31,18 +32,40 @@ DataChunks get_data_chunks(const BoilerData *boiler_data, uint16_t samples)
     else
     {
         return (DataChunks){
-            .start = {(max_reading_index - (samples - boiler_data->last_index))*vars, 0},
+            .start = {(max_reading_index - (samples - boiler_data->last_index)) * vars, 0},
             .end = {max_reading_index * vars, boiler_data->last_index * vars},
             .has_two_chunks = 1};
     }
 }
 
-uint8_t* latest_sample(const BoilerData *boiler_data)
+size_t boiler_info(const BoilerData *boiler_data, char *out)
+// Return debugging information about data collection
+{
+    size_t pos = 0;
+    pos += sprintf(&out[pos], "Found %d temp sensors\n", boiler_data->tsensor_count);
+    for (size_t i = 0; i < boiler_data->tsensor_count; i++)
+    {
+        pos += sprintf(&out[pos], "%d: ", i);
+        for (size_t j = 0; j < 8; j++)
+        {
+            pos += sprintf(&out[pos], "%02x ", boiler_data->tsensor_address[i][j]);
+        }
+        pos += sprintf(&out[pos], "\n");
+    }
+    pos += sprintf(&out[pos], "Collected %d samples\n", boiler_data->total_samples);
+    out[pos] = 0;
+    return pos;
+}
+
+uint8_t *latest_sample(const BoilerData *boiler_data)
 // Just the latest sample
 {
-    if(boiler_data->last_index == 0) {
+    if (boiler_data->last_index == 0)
+    {
         return boiler_data->data[max_reading_index];
-    } else {
+    }
+    else
+    {
         return boiler_data->data[boiler_data->last_index - 1];
     }
 }

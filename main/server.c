@@ -39,6 +39,13 @@ static void tx_response(const int sock, char *tx_buffer, size_t start, size_t en
     }
 }
 
+static void print_boiler_info(BoilerData const *boiler_data, const int sock)
+{
+    char tx_buffer[1024];
+    int tx_len = boiler_info(boiler_data, tx_buffer);
+    tx_response(sock, tx_buffer, 0, tx_len);
+}
+
 static void latest_sample_human_readable(BoilerData const *boiler_data, const int sock)
 {
     char tx_buffer[128];
@@ -59,7 +66,7 @@ static void N_recent_samples_binary(BoilerData const *boiler_data, uint16_t samp
 static void help(const int sock)
 {
     char tx_buffer[40];
-    int tx_len = sprintf(tx_buffer, "Valid commands: n, 1, 2, 3 ...\n");
+    int tx_len = sprintf(tx_buffer, "Valid commands: n, i, 1, 2, 3 ...\n");
     tx_response(sock, tx_buffer, 0, tx_len);
 }
 
@@ -84,7 +91,11 @@ static void serve_data(const int sock, BoilerData const *boiler_data)
             rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
             ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
 
-            if (rx_buffer[0] == 'n') // "now": Human readable latest reading
+            if (rx_buffer[0] == 'i') // "info": Stats about stuff
+            {
+                print_boiler_info(boiler_data, sock);
+            }
+            else if (rx_buffer[0] == 'n') // "now": Human readable latest reading
             {
                 latest_sample_human_readable(boiler_data, sock);
             }

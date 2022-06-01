@@ -8,11 +8,16 @@
 const char *data_header[vars];
 const uint8_t temp_offset;
 
+typedef uint8_t SensorAddress[8];
+
 #define max_reading_index 10080 // 60min/hr * 24hr/day * 7 days (1 sample/min)
 typedef struct
 {
     uint8_t data[max_reading_index][vars];
     uint16_t last_index;
+    uint32_t total_samples;
+    SensorAddress tsensor_address[vars];
+    size_t tsensor_count;
 } BoilerData;
 
 uint8_t *next_writable_row(BoilerData *);
@@ -27,6 +32,9 @@ typedef struct
 
 DataChunks get_data_chunks(const BoilerData *, uint16_t);
 // Return data chunks for most recent N samples
+
+size_t boiler_info(const BoilerData *, char *out);
+// Return debugging information about data collection
 
 uint8_t *latest_sample(const BoilerData *);
 // Just the latest sample
