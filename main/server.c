@@ -42,7 +42,9 @@ static void tx_response(const int sock, char *tx_buffer, size_t start, size_t en
 static void print_boiler_info(BoilerData const *boiler_data, const int sock)
 {
     char tx_buffer[1024];
-    int tx_len = boiler_info(boiler_data, tx_buffer);
+    int tx_len = sprintf(tx_buffer, "Uptime %2.2fh\n", esp_timer_get_time() / (3600e6));
+    tx_response(sock, tx_buffer, 0, tx_len);
+    tx_len = boiler_info(boiler_data, tx_buffer);
     tx_response(sock, tx_buffer, 0, tx_len);
 }
 
