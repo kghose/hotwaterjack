@@ -11,8 +11,6 @@
 const int TEMP_BUS = GPIO_NUM_15; // The pin the DS18b20 is connected to
 static const char *TAG = "Sampler";
 
-//DeviceAddress tempSensors[vars];
-
 void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
 {
     *count = 0;
@@ -29,8 +27,8 @@ void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
 void initialize_temperature_sensors(BoilerData *boiler_data)
 {
     ds18b20_init(TEMP_BUS);
-    get_ds18b20_addrs((DeviceAddress*)boiler_data->tsensor_address, &(boiler_data->tsensor_count));
-    ds18b20_setResolution((DeviceAddress*)boiler_data->tsensor_address, boiler_data->tsensor_count, 10);
+    get_ds18b20_addrs((DeviceAddress *)boiler_data->tsensor_address, &(boiler_data->tsensor_count));
+    ds18b20_setResolution((DeviceAddress *)boiler_data->tsensor_address, boiler_data->tsensor_count, 10);
 }
 
 void test_data_sampler(uint8_t *row)
@@ -62,9 +60,10 @@ void sample_data_callback(void *arg)
     // test_data_sampler(row);
 
     ds18b20_requestTemperatures();
-    for(uint8_t i = 0 ; i < boiler_data->tsensor_count; i++) {
+    for (uint8_t i = 0; i < boiler_data->tsensor_count; i++)
+    {
         float temp = ds18b20_getTempF((DeviceAddress *)boiler_data->tsensor_address[i]);
-        row[i] = (int)temp;
+        row[i] = temp > DEVICE_DISCONNECTED_F ? (int)temp : 0;
     }
 }
 
