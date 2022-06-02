@@ -7,7 +7,6 @@
 #include "flashled.h"
 #include "sampler.h"
 
-#define SAMPLE_DT 1000000
 const int TEMP_BUS = GPIO_NUM_15; // The pin the DS18b20 is connected to
 static const char *TAG = "Sampler";
 
@@ -16,12 +15,25 @@ void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
     *count = 0;
     reset_search();
     // search for addresses on the oneWire protocol
-    while (search(tempSensorAddresses[*count], true))
+    // This algorithm will freeze the ESP32 if the desired number of sensors are not hooked up
+    // I had to use this because the response of my sensors could be intermittently glitchy
+    size_t expected_sensors = vars;
+    while (*count < expected_sensors)
     {
-        (*count)++;
-        if (*count == vars)
-            break;
+        if (search(tempSensorAddresses[*count], true))
+        {
+            (*count)++;
+        }
     }
+
+    // This algorithm will pull in just the number of devices seen on the bus, but is sensitive to
+    // glitches
+    // while (search(tempSensorAddresses[*count], true))
+    // {
+    //     (*count)++;
+    //     if (*count == vars)
+    //         break;
+    // }
 }
 
 void initialize_temperature_sensors(BoilerData *boiler_data)
@@ -29,6 +41,7 @@ void initialize_temperature_sensors(BoilerData *boiler_data)
     ds18b20_init(TEMP_BUS);
     get_ds18b20_addrs((DeviceAddress *)boiler_data->tsensor_address, &(boiler_data->tsensor_count));
     ds18b20_setResolution((DeviceAddress *)boiler_data->tsensor_address, boiler_data->tsensor_count, 10);
+    ESP_LOGI(TAG, "Found %d temp sensors", boiler_data->tsensor_count);
 }
 
 void test_data_sampler(uint8_t *row)
@@ -78,5 +91,5 @@ void start_sampler(BoilerData *boiler_data)
 
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, SAMPLE_DT));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, sample_dt_us));
 }
