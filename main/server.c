@@ -56,10 +56,10 @@ static void latest_sample_human_readable(BoilerData const *boiler_data, const in
 static void N_recent_samples_binary(BoilerData const *boiler_data, uint16_t samples, const int sock)
 {
     DataChunks data_chunks = get_data_chunks(boiler_data, samples);
-    tx_response(sock, (char*)boiler_data->data, data_chunks.start[0], data_chunks.end[0]);
+    tx_response(sock, (char *)boiler_data->data, data_chunks.start[0], data_chunks.end[0]);
     if (data_chunks.has_two_chunks)
     {
-        tx_response(sock, (char*)boiler_data->data, data_chunks.start[1], data_chunks.end[1]);
+        tx_response(sock, (char *)boiler_data->data, data_chunks.start[1], data_chunks.end[1]);
     }
 }
 
@@ -68,6 +68,30 @@ static void help(const int sock)
     char tx_buffer[40];
     int tx_len = sprintf(tx_buffer, "Valid commands: n, i, 1, 2, 3 ...\n");
     tx_response(sock, tx_buffer, 0, tx_len);
+}
+
+static void process_command(const int sock, BoilerData const *boiler_data, char *rx_buffer)
+{
+    int samples;
+    switch (rx_buffer[0])
+    {
+    case 'i': // "info": Stats about stuff
+        print_boiler_info(boiler_data, sock);
+        break;
+    case 'n': // "now": Human readable latest reading
+        latest_sample_human_readable(boiler_data, sock);
+        break;
+    default:
+        samples = atoi(rx_buffer);
+        if (samples > 0)
+        {
+            N_recent_samples_binary(boiler_data, samples, sock);
+        }
+        else
+        {
+            help(sock);
+        }
+    }
 }
 
 static void serve_data(const int sock, BoilerData const *boiler_data)
@@ -89,28 +113,8 @@ static void serve_data(const int sock, BoilerData const *boiler_data)
         else
         {
             rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
-            ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
-
-            if (rx_buffer[0] == 'i') // "info": Stats about stuff
-            {
-                print_boiler_info(boiler_data, sock);
-            }
-            else if (rx_buffer[0] == 'n') // "now": Human readable latest reading
-            {
-                latest_sample_human_readable(boiler_data, sock);
-            }
-            else
-            {
-                int samples = atoi(rx_buffer);
-                if (samples == 0)
-                {
-                    help(sock);
-                }
-                else
-                {
-                    N_recent_samples_binary(boiler_data, samples, sock);
-                }
-            }
+            ESP_LOGI(TAG, "Received %s", rx_buffer);
+            process_command(sock, boiler_data, rx_buffer);
         }
     } while (len > 0);
 }
