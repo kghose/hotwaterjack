@@ -2,7 +2,6 @@
 #define DATA_H
 
 #include <stdint.h>
-#include "time.h"
 
 #define vars 4
 const char *data_header[vars];
@@ -10,6 +9,7 @@ const uint8_t temp_offset;
 
 typedef uint8_t SensorAddress[8];
 
+#define sample_dt_us 1000000    // 1 sample every 1sec for testing
 #define max_reading_index 10080 // 60min/hr * 24hr/day * 7 days (1 sample/min)
 typedef struct
 {

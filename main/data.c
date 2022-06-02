@@ -52,7 +52,9 @@ size_t boiler_info(const BoilerData *boiler_data, char *out)
         }
         pos += sprintf(&out[pos], "\n");
     }
-    pos += sprintf(&out[pos], "Collected %d samples\n", boiler_data->total_samples);
+    pos += sprintf(&out[pos], "Read %d samples\n", boiler_data->total_samples);
+    pos += sprintf(&out[pos], "Sampling every %3.2f seconds\n", sample_dt_us / 1000000.0);
+    pos += sprintf(&out[pos], "Rolling buffer size is %d samples\n", max_reading_index);
     out[pos] = 0;
     return pos;
 }
