@@ -1,4 +1,5 @@
-"""Invoke with number of samples to retrieve.""
+"""Invoke with number of samples to retrieve."""
+
 import csv
 import errno
 import socket
@@ -28,4 +29,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 with open("boiler-data.csv", "w") as csvfile:
     spamwriter = csv.writer(csvfile)
     for n in range(samples):
-        spamwriter.writerow(data[n * vars : (n + 1) * vars])
+        spamwriter.writerow([n] + data[n * vars : (n + 1) * vars])
