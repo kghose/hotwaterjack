@@ -13,8 +13,6 @@ static const char *TAG = "Sampler";
 void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
 {
     *count = 0;
-    reset_search();
-    // search for addresses on the oneWire protocol
     // This algorithm will freeze the ESP32 if the desired number of sensors are not hooked up
     // I had to use this because the response of my sensors could be intermittently glitchy
     // which means the algorithm below will sometimes not pull in all the sensors. We simply
@@ -34,15 +32,6 @@ void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
                 break;
         }
     }
-
-    // This algorithm will pull in just the number of devices seen on the bus, but is sensitive to
-    // glitches
-    // while (search(tempSensorAddresses[*count], true))
-    // {
-    //     (*count)++;
-    //     if (*count == vars)
-    //         break;
-    // }
 }
 
 void initialize_temperature_sensors(BoilerData *boiler_data)
@@ -55,21 +44,10 @@ void initialize_temperature_sensors(BoilerData *boiler_data)
 
 void test_data_sampler(uint8_t *row)
 {
-    static uint8_t last_row[vars] = {0, 0, 0, 0};
+    static uint8_t last_row[vars] = {100, 120, 140, 160};
     for (int i = 0; i < vars; i++)
     {
-        if (last_row[i] == 255)
-        {
-            last_row[i] = 0;
-        }
-        else
-        {
-            last_row[i]++;
-            break;
-        }
-    }
-    for (int i = 0; i < vars; i++)
-    {
+        last_row[i] = last_row[i] < 200 ? last_row[i] + 1 : 100;
         row[i] = last_row[i];
     }
 }
@@ -77,9 +55,10 @@ void test_data_sampler(uint8_t *row)
 void sample_data_callback(void *arg)
 {
     flash_led(100000);
+    
     BoilerData *boiler_data = (BoilerData *)arg;
     uint8_t *row = next_writable_row(boiler_data);
-    // test_data_sampler(row);
+    // test_data_sampler(row); return;
 
     ds18b20_requestTemperatures();
     for (uint8_t i = 0; i < boiler_data->tsensor_count; i++)
