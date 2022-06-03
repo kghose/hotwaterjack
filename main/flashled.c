@@ -12,9 +12,12 @@ void configure_led(void)
     gpio_set_direction(LED, GPIO_MODE_OUTPUT);
 }
 
+esp_timer_handle_t led_timer;
+
 static void turn_off_led(void *arg)
 {
     gpio_set_level(LED, 0);
+    esp_timer_delete(led_timer);
 }
 
 void flash_led(size_t t)
@@ -25,7 +28,6 @@ void flash_led(size_t t)
         .callback = &turn_off_led,
         .name = "led"};
 
-    esp_timer_handle_t led_timer;
     ESP_ERROR_CHECK(esp_timer_create(&led_timer_args, &led_timer));
     ESP_ERROR_CHECK(esp_timer_start_once(led_timer, t));
 }
