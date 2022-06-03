@@ -17,12 +17,21 @@ void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
     // search for addresses on the oneWire protocol
     // This algorithm will freeze the ESP32 if the desired number of sensors are not hooked up
     // I had to use this because the response of my sensors could be intermittently glitchy
+    // which means the algorithm below will sometimes not pull in all the sensors. We simply
+    // rerun the search until we have a run where all the sensors are found.
     size_t expected_sensors = vars;
     while (*count < expected_sensors)
     {
-        if (search(tempSensorAddresses[*count], true))
+        *count = 0;
+        reset_search();
+        // Search for addresses on the oneWire protocol
+        // This algorithm will pull in just the number of devices seen on the bus, 
+        // and won't find all devices if some of them are glitching.
+        while (search(tempSensorAddresses[*count], true))
         {
             (*count)++;
+            if (*count == vars)
+                break;
         }
     }
 
