@@ -23,7 +23,7 @@ void get_ds18b20_addrs(DeviceAddress *tempSensorAddresses, size_t *count)
         *count = 0;
         reset_search();
         // Search for addresses on the oneWire protocol
-        // This algorithm will pull in just the number of devices seen on the bus, 
+        // This algorithm will pull in just the number of devices seen on the bus,
         // and won't find all devices if some of them are glitching.
         while (search(tempSensorAddresses[*count], true))
         {
@@ -52,19 +52,28 @@ void test_data_sampler(uint8_t *row)
     }
 }
 
+float get_raw_temp(const DeviceAddress *deviceAddress)
+{
+    ScratchPad scratchPad;
+    if (ds18b20_isConnected(deviceAddress, scratchPad))
+    {
+        return calculateTemperature(deviceAddress, scratchPad);
+    }
+    return DEVICE_DISCONNECTED_RAW;
+}
+
 void sample_data_callback(void *arg)
 {
     flash_led(100000);
-    
+
     BoilerData *boiler_data = (BoilerData *)arg;
-    uint8_t *row = next_writable_row(boiler_data);
+    int16_t *row = next_writable_row(boiler_data);
     // test_data_sampler(row); return;
 
     ds18b20_requestTemperatures();
     for (uint8_t i = 0; i < boiler_data->tsensor_count; i++)
     {
-        float temp = ds18b20_getTempF((DeviceAddress *)boiler_data->tsensor_address[i]);
-        row[i] = temp > DEVICE_DISCONNECTED_F ? (int)temp : 0;
+        row[i] = get_raw_temp((DeviceAddress *)boiler_data->tsensor_address[i]);
     }
 }
 

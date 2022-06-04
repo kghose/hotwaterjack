@@ -3,9 +3,8 @@
 Use ESP32 board to record temperatures and events associated with
 hot water boiler operation.
 
-1. Record temperatures and events and keep in memory
+1. Record temperatures and keep in rolling buffer
 2. Deliver data via WiFi link when client conencts
-3. Overwrite data when buffer full or when client has downloaded data
 
 *With apologies to Carole King
 
@@ -20,6 +19,7 @@ Special function to print out latest data point in human readable format.
 
 | Command  | Returns                                        |
 |---       |---                                             |
+| info     | Print stats and info about the logger and data |
 | now      | Most recent data row, human readable |
 | 1, 2..   | Most recent N data rows, binary |
 
@@ -33,22 +33,10 @@ Cons:
 
 Next design: "Page" the data by day and have a timestamp for the day.
 
-## Flowchart
-
-1. Initialize WiFi connection
-2. Initialize TCP server
-3. Log temperature and events every 1 minute
-4. When client connects, deliver data
-5. If client instructs, reset buffer
-6. If buffer is full, begin to overwrite it
-
 
 ## WiFi and other config options
 
 Set using `idf.py menuconfig`. See [main/Kconfig.projbuild] for the list of options.
-
-
-## Buffer design
 
 # Other software
 1. [DS18b20 ESP32 library from FeelFreeLinux](https://github.com/feelfreelinux/ds18b20)

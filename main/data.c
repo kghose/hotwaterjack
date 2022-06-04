@@ -4,14 +4,14 @@
 
 // const char *data_header[7] = {"tstat", "hot_in", "hot_out", "boiler_in", "boiler_out", "intake", "exhaust"};
 const char *data_header[vars] = {"hot_in", "hot_out", "boiler_in", "boiler_out"};
-const uint8_t temp_offset = 20; //-20F = 0 in the data
+const size_t stride = vars * 2;
 
-uint8_t *next_writable_row(BoilerData *boiler_data)
+int16_t *next_writable_row(BoilerData *boiler_data)
 // Return row vector to write to. Internally, increments array index with loop around.
 {
     uint16_t idx = boiler_data->last_index;
     boiler_data->last_index++;
-    if (boiler_data->last_index == max_reading_index)
+    if (boiler_data->last_index == buffer_len)
     {
         boiler_data->last_index = 0;
     }
@@ -22,18 +22,19 @@ uint8_t *next_writable_row(BoilerData *boiler_data)
 DataChunks get_data_chunks(const BoilerData *boiler_data, uint16_t samples)
 // Return data chunks for most recent N samples
 {
-    if (samples <= boiler_data->last_index)
+    size_t k = boiler_data->last_index;
+    if (samples <= k)
     {
         return (DataChunks){
-            .start = {(boiler_data->last_index - samples) * vars, 0},
-            .end = {boiler_data->last_index * vars, 0},
+            .start = {(k - samples) * stride, 0},
+            .end = {k * stride, 0},
             .has_two_chunks = 0};
     }
     else
     {
         return (DataChunks){
-            .start = {(max_reading_index - (samples - boiler_data->last_index)) * vars, 0},
-            .end = {max_reading_index * vars, boiler_data->last_index * vars},
+            .start = {(buffer_len - (samples - k)) * stride, 0},
+            .end = {buffer_len * stride, k * stride},
             .has_two_chunks = 1};
     }
 }
@@ -54,17 +55,17 @@ size_t boiler_info(const BoilerData *boiler_data, char *out)
     }
     pos += sprintf(&out[pos], "Read %d samples\n", boiler_data->total_samples);
     pos += sprintf(&out[pos], "Sampling every %3.2f seconds\n", sample_dt_us / 1000000.0);
-    pos += sprintf(&out[pos], "Rolling buffer size is %d samples\n", max_reading_index);
+    pos += sprintf(&out[pos], "Rolling buffer size is %d samples\n", buffer_len);
     out[pos] = 0;
     return pos;
 }
 
-uint8_t *latest_sample(const BoilerData *boiler_data)
+const int16_t *latest_sample(const BoilerData *boiler_data)
 // Just the latest sample
 {
     if (boiler_data->last_index == 0)
     {
-        return boiler_data->data[max_reading_index];
+        return boiler_data->data[buffer_len];
     }
     else
     {
@@ -72,13 +73,13 @@ uint8_t *latest_sample(const BoilerData *boiler_data)
     }
 }
 
-size_t human_readable(const uint8_t row[vars], char *out)
+size_t human_readable(const int16_t row[vars], char *out)
 // Return row in human readable format
 {
     size_t pos = 0;
     for (size_t i = 0; i < vars; i++)
     {
-        pos += sprintf(&out[pos], "%s: %d\n", data_header[i], row[i]);
+        pos += sprintf(&out[pos], "%s: %2.1f\n", data_header[i], row[i] / 128.0f);
     }
     out[pos] = 0;
     return pos;
