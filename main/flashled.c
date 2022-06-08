@@ -6,6 +6,8 @@
 #define LED GPIO_NUM_2
 
 static int configured = 0;
+static int state = 0;
+esp_timer_handle_t led_timer;
 
 void configure_led(void)
 {
@@ -15,19 +17,25 @@ void configure_led(void)
     configured = 1;
 }
 
-esp_timer_handle_t led_timer;
-
 static void turn_off_led(void *arg)
 {
     gpio_set_level(LED, 0);
+    state = 0;
     esp_timer_delete(led_timer);
 }
 
 void flash_led(size_t t)
 {
     if (!configured) configure_led();
-    gpio_set_level(LED, 1);
 
+    if(state) // Someone already turned the LED on
+    {
+        esp_timer_stop(led_timer);
+        esp_timer_delete(led_timer);
+    }
+
+    gpio_set_level(LED, 1);
+    state = 1;
     const esp_timer_create_args_t led_timer_args = {
         .callback = &turn_off_led,
         .name = "led"};
