@@ -24,7 +24,6 @@ void app_main(void)
 
   ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-  configure_led();
   wifi_init_sta();
 
   BoilerData *boiler_data = calloc(1, sizeof(BoilerData));
